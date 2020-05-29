@@ -15,6 +15,13 @@ function extractknickdata(filepath,output_location,varargin)
 % while horizontal velocity is predicted to scale with K, be constant in chi space,
 % and scale with drainage area in real space (Niemann et al., 2001; Royden and
 % Perron, 2013; Mitchell and Yanites, 2019).
+%
+% Outputs:
+        - Average vertical and chi-velocities selected time window
+        - Cross knickpoint change in ksn over selected time window
+        - Number of timesteps used in velocity calculations
+        - Rsq for vertical velocity
+        - Time vs. Elevation plot of knickpoints
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function Written by Josh Wolpert - Updated : 05/28/20 %
@@ -52,9 +59,9 @@ h=p.Results.h;
 window=p.Results.ck_ksn_node_window;
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Check input and set up arrays and variables for main loop %%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Check input and set up arrays and variables for main loop %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Load and prepare model output data
 load(filepath);
@@ -101,9 +108,9 @@ end
 window_length=(max(window)-min(window))+1;
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% View model output, find knicks, and record knick data at each viewed_dt %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% View model output, find knicks, and record knick data at each viewed_dt %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i=view_step:view_step:size(results,1)
 
@@ -189,9 +196,9 @@ for i=view_step:view_step:size(results,1)
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Plot, Select, and analyze Knickpoints on t-z plots %%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Plot, Select, and analyze Knickpoints on t-z plots %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 figure(2)
 t = knicks_array(:,1);
@@ -266,9 +273,9 @@ chi_celerity = chi_celerity(1);
 ck_ksn = [koi(:,1) koi(:,4) koi(:,5) koi(:,4)-koi(:,5)];
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Save output %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%
+% Save output %
+%%%%%%%%%%%%%%%
 
 save(output_location,'knicks_array')
 save(output_location,'Vv','-append');
