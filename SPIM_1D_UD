@@ -28,7 +28,7 @@ addParameter(p,'n',1.5,@(x) isnumeric(x)); % Slope exponent
 addParameter(p,'Ao',1,@(x) isnumeric(x)); % Reference drainage area [m^2]
 addParameter(p,'tmax',10000,@(x) isnumeric(x)); % Model Duration
 addParameter(p,'dt',1000,@(x) isnumeric(x)); % Timestep length [yr]
-addParameter(p,'Ko',2*10^-5,@(x) isnumeric(x)); % Initial erosional efficiency [m^2/yr]
+addParameter(p,'Ko',2*10^-5,@(x) isnumeric(x)); % Initial erosional efficiency
 addParameter(p,'Uo',0.001,@(x) isnumeric(x)); % Initial uplift rate [m/yr]
 addParameter(p,'contacts',false,@(x) islogical(x)); % Logical indicator for contacts
 addParameter(p,'c_list',@(x) isnumeric(x)); % mx3 matrix of elevations in column 1, dip angle in column 2, and K value in column 3
