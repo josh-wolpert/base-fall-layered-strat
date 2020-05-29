@@ -14,8 +14,11 @@ function extractknickdata(filepath,output_location,varargin)
 % vertical velocity is constant and independent of K in chi and real space,
 % while horizontal velocity is predicted to scale with K, be constant in chi space,
 % and scale with drainage area in real space (Niemann et al., 2001; Royden and
-$ Perron, 2013; Mitchell and Yanites, 2019).
+% Perron, 2013; Mitchell and Yanites, 2019).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Function Written by Josh Wolpert - Updated : 05/28/20 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%
 % Parse Inputs %
