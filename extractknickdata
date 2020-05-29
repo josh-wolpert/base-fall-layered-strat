@@ -17,12 +17,12 @@ function extractknickdata(filepath,output_location,varargin)
 % Perron, 2013; Mitchell and Yanites, 2019).
 %
 % Outputs:
-        - Average vertical and chi-velocities selected time window
-        - Cross knickpoint change in ksn over selected time window
-        - Number of timesteps used in velocity calculations
-        - Rsq for vertical velocity
-        - Time vs. Elevation plot of knickpoints
-
+%        - Average vertical and chi-velocities selected time window
+%        - Cross knickpoint change in ksn over selected time window
+%        - Number of timesteps used in velocity calculations
+%        - Rsq for vertical velocity
+%        - Time vs. Elevation plot of knickpoints
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function Written by Josh Wolpert - Updated : 05/28/20 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
