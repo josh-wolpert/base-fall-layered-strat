@@ -205,7 +205,7 @@ for k = 2:(tmax/dt)  % This should probably start at 1.
         else
         end
         
-        % Spatial loop for discretized uplift and erosion calculations
+        % Set node index
         idx = nn-i;
         
         % Calculate Erosion (explicit forward upwind differencing scheme [Campforts and Govers, 2015])
