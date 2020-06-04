@@ -1,7 +1,7 @@
-function SPM_1D_UD(varargin)
+function SPIM_1D_UD(output_location,varargin)
 %
 % Usage:
-%       SPM_UD_Function_Periodic_Writeout('m',0.75,'n',1.5,'l',20000,'dx',10,'tmax',1000000,'dt',100,'Ko',3.8*10^-8,'Uo',2.5*10^-4,'contact',true,'c_list',[-1910 10 3.8*10^-8;-2210 10 7.22*10^-7],'uplift',true,'u_list',[15000000 2.5*10^-4],'t_no_write',500000,'dt_write_out',10000,'output_location','/Users/joshw/Documents/MATLAB/1_D Models/Model_Runs/test')
+%       SPM_1D_UD('/Users/joshw/Documents/MATLAB/1_D Models/Model_Runs/test','m',0.75,'n',1.5,'l',20000,'dx',10,'tmax',1000000,'dt',100,'Ko',3.8*10^-8,'Uo',2.5*10^-4,'contact',true,'c_list',[-1910 10 3.8*10^-8;-2210 10 7.22*10^-7],'uplift',true,'u_list',[15000000 2.5*10^-4],'t_no_write',500000,'dt_write_out',10000)
 %
 % Description:
 %       Function to solve the stream power incision model with the explicit upwind differencing scheme (See supporting information to 
@@ -9,12 +9,12 @@ function SPM_1D_UD(varargin)
 %       power incision model parameters, geometries of planar contacts, and timing and magnitudes of changes in uplift rate.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Function Written by Josh Wolpert - Updated : 05/28/20 %
+% Function Written by Josh Wolpert - Updated : 06/3/20 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Parse Inputs
 p = inputParser;
-p.FunctionName='SPM_UD_Function';
+p.FunctionName='SPIM_1D_UD';
 
 addRequired(p,'output_location',@(x) ischar(x)); % File path for model output
 

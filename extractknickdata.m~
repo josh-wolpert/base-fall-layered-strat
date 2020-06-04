@@ -244,24 +244,24 @@ end
 % 2) Find the nearest knickpoint to every point on the line
 k = dsearchn([t z],[px py]);
 
-% The output of 'dsearchn' will be the indices of interest in 'knicks_array', so you can then extract info for those knicks.
+% 3) The output of 'dsearchn' will be the indices of interest in 'knicks_array', so you can then extract info for those knicks.
 koi = knicks_array(k,:); % Extract data for knicks of interest
 
 % Remove Repeats
 koi = unique(koi,'rows');
 
-% 3) Calculate vertical velocity and Rsq for velocity of knicks of interest
+% 4) Calculate vertical velocity and Rsq for velocity of knicks of interest
 vv = polyfit(koi(:,1),koi(:,2),1);
 Vertical_velocity = vv(1);
 B = corrcoef(koi(:,1),koi(:,2));
 Rsqv = B(1,2)^2;
 N = numel(koi(:,1));
 
-% 4) Calculate horizontal velocity in chi-space for knicks
+% 5) Calculate horizontal velocity in chi-space for knicks
 cc = polyfit(koi(:,1),koi(:,3),1);
 chi_celerity = cc(1);
 
-% 5) Store: Time | Mean Upstream Ksn | Mean Downstream Ksn | Change in Ksn
+% 6) Store: Time | Mean Upstream Ksn | Mean Downstream Ksn | Change in Ksn
 ck_ksn = [koi(:,1) koi(:,4) koi(:,5) koi(:,4)-koi(:,5)];
 
 
@@ -269,6 +269,7 @@ ck_ksn = [koi(:,1) koi(:,4) koi(:,5) koi(:,4)-koi(:,5)];
 % Save output %
 %%%%%%%%%%%%%%%
 
+save(output_location,'knicks_array')
 save(output_location,'Vertical_velocity','-append');
 save(output_location,'chi_celerity','-append');
 save(output_location,'Rsqv','-append');
