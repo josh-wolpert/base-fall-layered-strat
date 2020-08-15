@@ -1,46 +1,70 @@
 function extractknickdata(filepath,output_location,varargin)
 
 % Examples:
-% extractknickdata('\\geol-af-nas\jwolpe1\MS Thesis\Additional_Runs\test\full_time','\\geol-af-nas\jwolpe1\MS Thesis\test\test1','show_model',false,'detection_threshold',1000,'model_dt',10000,'viewed_dt',10000,'ck_ksn_node_window',[15 30])
-
+% extractknickdata('\\SPIM_1D_UD_output_filepath','\\output_location_filepath','show_model',true,'detection_threshold',1000,'model_dt',1000,'viewed_dt',10000)
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Description: Companion function to view 1-D model runs and extract
-% knickpoint data. Takes filepath for output of SPIM_1D_UD function, identifies 
-% knickpoints as changes in mean slope of channel steepness arrays, and allows 
-% users to pick out knickpoints of interest from time vs. elevation plots. The 
-% function then calculates the vertical and horizontal (in chi-space) velocities 
-% of the selected knickpoints via linear regression and cross-knickpoint changes
-% in ksn at each timestep. Steady state analytical solutions predict knickpoint
-% vertical velocity is constant and independent of K in chi and real space,
-% while horizontal velocity is predicted to scale with K, be constant in chi space,
-% and scale with drainage area in real space (Niemann et al., 2001; Royden and
-% Perron, 2013; Mitchell and Yanites, 2019).
+% Overview: 
+% Companion function to view 1-D model runs and extract knickpoint data. 
+% Takes filepath for output of SPIM_1D_UD and allows users to extract data 
+% from plots of knickpoint elevation through time. The function then 
+% calculates the vertical velocity and chi celerity of the extracted 
+% knickpoint data with linear regressions and provides additional
+% information on the locations and prominence of extracted knickpoints 
+% throughout the run.
 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Inputs (Required):
+% - 'filepath': Full file path to the 'full_time' .mat file for the model run output you'd 
+%               like to analyze
+% - 'output_location': Full file path to store 'extractknickdata' output
+%
+% Inputs (Optional, default values in parentheses):
+% - 'show_model' (false): Logical indicator to show model output while 'extractknickdata'
+%                         runs. This lengthens the function's run time.
+% - 'detection_threshold' (40000): Sensitivity threshold for identifying knickpoints.
+%                                  Lowering the threshold increases sensitivity (i.e., more
+%                                  subtle changes in channel steepness are identified as 
+%                                  knickpoints)
+% - 'model_dt' (1000): Time step of model output located in the 'filepath' parameter. This
+%                      is equal to 'dt_write_out' from the model run
+% - 'viewed_dt' (5000): Time step for viewing the model run if 'show_model' is true. Must
+%                       be a factor of tmax/model_dt
+% 'ck_ksn_node_window ([15 20]): 1x1[x1] or 1x2[x1 x2] array indicating which nodes to use 
+%                                to calculate cross-knickpoint ksn (i.e., knickpoint
+%                                prominence). Uses ksn at single nodes located 'x1' nodes 
+%                                upstream and downstream of a knickpoint or takes the average
+%                                ksn of nodes located between 'x1' and 'x2' nodes upstream 
+%                                and downstream of a knickpoint.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Outputs:
-%        - Average vertical velocities and chi celerities
-%        - Cross knickpoint change in ksn over selected time window
-%        - Number of timesteps used in velocity and celerity calculations
-%        - Rsq for vertical velocity
-%        - Time vs. Elevation plot of knickpoints
+% - 'knicks_array': Array of information for all knickpoints throughout model run (not just extracted knickpoints)
+%                   Column key: Time | Elevation | Distance (chi) | Mean Upstream ksn | Mean Downstream ksn | Distance (real)
+% - 'Vv': Vertical velocity measured with linear regression through extracted knickpoints
+% - 'knicks_elevations': Time | Extracted knickpoints elevations
+% - 'knicks_chi_distances': Time | Extracted knickpoints upstream distances (chi space)
+% - 'knicks_real_distances': Time | Extracted knickpoints upstream distances (real space)
+% - 'chi_celerity': Extracted knickpoint celerity in chi space measured with linear regression
+% - 'Rsq_Vv': R-squared value for regression used to measure vertical velocity of extracted knickpoints
+% - 'N': Number of extracted knickpoints
+% - 'ck_ksn': For extracted knickpoints: Time | Mean Upstream ksn | Mean Downstream ksn | Cross-Contact Change in ksn (Prominence)
 %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Function Written by Josh Wolpert - Updated : 05/28/20 %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%
-% Parse Inputs %
-%%%%%%%%%%%%%%%%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parse Inputs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 p = inputParser;
-p.FunctionName = 'CalcKnickVertV';
+p.FunctionName = 'extractknickdata';
 addRequired(p,'filepath',@(x) ischar(x)); % File path to model output
 addRequired(p,'output_location',@(x) ischar(x)); % File path of location to store output (includes name of the .mat file that will house the output)
 
 addParameter(p,'show_model',false,@(x) islogical(x)); % Option to show model output while function runs
 addParameter(p,'detection_threshold',40000,@(x) isnumeric(x)); % Adjustable sensitivity threshold for detecting knickpoints. Higher is less sensitive. Lower is more sensitive.
-addParameter(p,'model_dt',100,@(x) isnumeric(x)); % Timestep in model run output (not necessarily equal to model dt)
-addParameter(p,'viewed_dt',500,@(x) isnumeric(x)); % Timestep used when viewing the model output. Must be a factor of tmax/model_dt
-addParameter(p,'ck_ksn_node_window',[15 15],@(x) isnumeric(x)) % Node window up and downstream from knickpoint across which ksn is averaged for cross-knickpoint change in ksn calculations
+addParameter(p,'model_dt',1000,@(x) isnumeric(x)); % Timestep in model run output (not necessarily equal to the dt parameter in the model function)
+addParameter(p,'viewed_dt',5000,@(x) isnumeric(x)); % Timestep used when viewing the model output. Must be a factor of tmax/model_dt
+addParameter(p,'ck_ksn_node_window',[15 20],@(x) isnumeric(x)) % Node window up and downstream from knickpoint across which average ksn will be calulated for cross-knickpoint change in ksn calculations
 
 parse(p,filepath,output_location,varargin{:});
 filepath=p.Results.filepath;
@@ -53,9 +77,9 @@ viewed_dt=p.Results.viewed_dt;
 window=p.Results.ck_ksn_node_window;
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Check input and set up arrays and variables for main loop %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Check input. Set up arrays and variables for main loop %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Load and prepare model output data
 load(filepath);
@@ -83,7 +107,7 @@ else
     num_contacts = size(c_matrix,3);
 end
 
-% Initialize output array
+% Initialize array
 knicks_array=[];
 
 % Check if window is compatible
@@ -135,7 +159,7 @@ for i=view_step:view_step:size(results,1)
     end
 
     dz=[results(i,2:numel(chi))-results(i,1:numel(chi)-1)];
-    dchi=[chi(2:numel(chi))-chi(1:numel(chi)-1)]; % Transpose for older runs
+    dchi=[chi(2:numel(chi))-chi(1:numel(chi)-1)];
     ksn=dz./dchi;
 
     if show_model
@@ -148,10 +172,11 @@ for i=view_step:view_step:size(results,1)
     else
     end
     
-    % Find knicks and record their elevations, distances (x), and cross-knick ksns
+    % Find knicks and record their elevations, distances (chi), distances (normal)
     knicks_ksn=find(ischange(ksn,'linear','Threshold',detection_threshold));
     knicks_elev_temp=results(i,knicks_ksn)';
-    knicks_dist_temp=chi(knicks_ksn)';
+    knicks_chi_temp=chi(knicks_ksn)';
+    knicks_dist_temp=max(x_scale)-x_scale(knicks_ksn)';
     
     % Initialize ksn vectors
     ksn_behind_temp=zeros(window_length,numel(knicks_ksn));
@@ -184,20 +209,24 @@ for i=view_step:view_step:size(results,1)
     
     knick_t_temp = zeros(numel(ksn_ahead_temp),1)+(i*model_dt);
     
-    % Record: Time | Elevation | Distance | Mean Upstream Ksn | Mean Downstream Ksn
-    knicks_array=[knicks_array;knick_t_temp knicks_elev_temp knicks_dist_temp ksn_ahead_temp ksn_behind_temp];
+    % Store: Time | Elevation | Distance (chi) | Mean Upstream Ksn | Mean Downstream Ksn | Distance (real)
+    knicks_array=[knicks_array;knick_t_temp knicks_elev_temp knicks_chi_temp ksn_ahead_temp ksn_behind_temp knicks_dist_temp];
     
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Plot, Select, and analyze Knickpoints on t-z plots %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Plot, Select, and analyze Knickpoints on t-z plots %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 figure(2)
 t = knicks_array(:,1);
 z = knicks_array(:,2);
 graph=scatter(t,z,'k');
+xlabel('Time')
+ylabel('Elevation')
+title(compose("Select endpoints or vertices by clicking on the graph in at"...
+    + "\n" + "least two locations. Double-click the final endpoint to finish.")) 
 
 % Save t-z plot of knickpoints
 saveas(graph,output_location)
@@ -244,34 +273,46 @@ end
 % 2) Find the nearest knickpoint to every point on the line
 k = dsearchn([t z],[px py]);
 
-% The output of 'dsearchn' will be the indices of interest in 'knicks_array', so you can then extract info for those knicks.
-koi = knicks_array(k,:); % Extract data for knicks of interest
+% 3) % Extract data for knicks of interest
+koi = knicks_array(k,:);
 
 % Remove Repeats
 koi = unique(koi,'rows');
 
-% 3) Calculate vertical velocity and Rsq for velocity of knicks of interest
+% 4) Calculate vertical velocity and Rsq for velocity of knicks of interest
 vv = polyfit(koi(:,1),koi(:,2),1);
-Vertical_velocity = vv(1);
+knicks_elevations = [koi(:,1),koi(:,2)];
+Vv = vv(1);
 B = corrcoef(koi(:,1),koi(:,2));
-Rsqv = B(1,2)^2;
+Rsq_Vv = B(1,2)^2;
 N = numel(koi(:,1));
 
-% 4) Calculate horizontal velocity in chi-space for knicks
-cc = polyfit(koi(:,1),koi(:,3),1);
-chi_celerity = cc(1);
+% 5) Calculate chi celerities at each viewed_dt
+knicks_chi_distances = [koi(:,1) koi(:,3)]; % Get array of knick distances in chi space
 
-% 5) Store: Time | Mean Upstream Ksn | Mean Downstream Ksn | Change in Ksn
+chi_celerity = polyfit(koi(:,1),koi(:,3),1);
+chi_celerity = chi_celerity(1);
+
+% 6) Store cross-knickpoint change in ksn with time: Time | Mean Upstream ksn | Mean Downstream ksn | Change in Ksn
 ck_ksn = [koi(:,1) koi(:,4) koi(:,5) koi(:,4)-koi(:,5)];
 
+% 7) Store extracted knickpoint distances (real space)
+knicks_real_distances = [koi(:,1) koi(:,6)];
 
-%%%%%%%%%%%%%%%
-% Save output %
-%%%%%%%%%%%%%%%
 
-save(output_location,'Vertical_velocity','-append');
-save(output_location,'chi_celerity','-append');
-save(output_location,'Rsqv','-append');
-save(output_location,'N','-append');
-save(output_location,'ck_ksn','-append');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Save output %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+save(output_location,'knicks_array') % Array of information for all knickpoints throughout model run (not just extracted knickpoints)
+% Column key for 'knicks_array': Time | Elevation | Distance (chi) | Mean Upstream ksn | Mean Downstream ksn | Distance (real)
+
+save(output_location,'Vv','-append'); % Extracted knickpoints vertical velocity measured with linear regression
+save(output_location,'knicks_elevations','-append'); % Time | Extracted knickpoints elevations
+save(output_location,'knicks_chi_distances','-append'); % Time | Extracted knickpoints distances (chi space)
+save(output_location,'knicks_real_distances','-append'); % Time | Extracted knickpoints distances (real space)
+save(output_location,'chi_celerity','-append'); % Extracted knickpoint celerity in chi space
+save(output_location,'Rsq_Vv','-append'); % For vertical velocity (Vv) measurement
+save(output_location,'N','-append'); % Number of extracted knickpoints
+save(output_location,'ck_ksn','-append'); % For extracted knickpoints: Time | Mean Upstream ksn | Mean Downstream ksn | Cross-Contact Change in ksn (Prominence)
 end
