@@ -1,5 +1,5 @@
 # base-fall-layered-strat
-Matlab functions to model 1-D stream power erosion within layered stratigraphy and extract knickpoint data from model output. Parameter descriptions and examples are included in function headings.
+Matlab functions to model 1-D river profile evolution with layered rock erodibilities governed by the stream power law and extract knickpoint data from model output. Parameter descriptions and examples are included in function headings. If you use this code in a publication, please cite: Wolpert, J.A. & Forte, A.M. (2021) Response of transient rock uplift and base level knickpoints to erosional efficiency contrasts in bedrock streams. Earth Surface Processes and Landforms, 1–18. Available from: https:// doi.org/10.1002/esp.5146
 ## SPIM_1D_UD
 Function to solve the stream power incision model in 1-D using an explicit upwind differencing scheme. Users have full control over Hack's Law, SPIM parameters, and the geometry and number of planar contacts.
 ## extractknickdata
